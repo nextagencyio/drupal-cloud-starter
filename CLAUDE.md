@@ -97,6 +97,7 @@ When asked to create a new content type (e.g., "create a product page"), follow 
 
 **Important Notes:**
 - Field IDs become `field_[id]` in Drupal (e.g., `"id": "price"` → `field_price`)
+- **CRITICAL**: In content values, use the field ID directly without "field_" prefix (e.g., `"price": "$299.99"` NOT `"field_price": "$299.99"`)
 - Use `"body": true` to include standard body field
 - Always include sample content for testing
 - Path aliases should follow `/content-type/slug` pattern
@@ -128,6 +129,7 @@ curl -k -X POST "${DRUPAL_BASE_URL}/api/dcloud-import" \
 - Field machine names (auto-generated)
 - Node IDs created
 - GraphQL schema updates
+- **Important**: GraphQL field names may differ from DCloud field IDs (check actual schema)
 
 ### 4. Frontend Implementation
 
@@ -219,6 +221,8 @@ export default function [ContentType]Card({ [contentType] }: [ContentType]CardPr
         </h3>
         
         {/* Add field displays */}
+        {/* For text[] fields with HTML content, use dangerouslySetInnerHTML */}
+        {/* Example: <span dangerouslySetInnerHTML={{ __html: field.processed }} /> */}
         
         <Link
           href={[contentType].path || `/[content-type]/${[contentType].id}`}
@@ -253,6 +257,8 @@ export default function [ContentType]Renderer({ [contentType] }: [ContentType]Re
             </h1>
 
             {/* Add field displays */}
+            {/* For text[] fields with HTML content, use dangerouslySetInnerHTML */}
+            {/* Example: <span dangerouslySetInnerHTML={{ __html: field.processed }} /> */}
 
             {[contentType].body?.processed && (
               <div 
@@ -414,6 +420,11 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
   "id": "in_stock",
   "label": "In Stock",
   "type": "bool"
+},
+{
+  "id": "features",
+  "label": "Key Features",
+  "type": "string[]"
 }
 ```
 
@@ -432,7 +443,7 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
 {
   "id": "speakers",
   "label": "Speakers",
-  "type": "text[]"
+  "type": "string[]"
 }
 ```
 
@@ -482,6 +493,7 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
 - Check OAuth token expiration
 - Verify JSON structure matches `sample.json` format
 - Ensure field IDs don't start with `field_`
+- **Critical**: In content values, use field ID without "field_" prefix (e.g., `"price": "$299.99"` not `"field_price": "$299.99"`)
 
 **2. GraphQL Errors**
 - Check if content type was created successfully in Drupal
@@ -494,9 +506,10 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
 - Verify GraphQL query syntax
 
 **4. Content Not Displaying**
-- Check GraphQL query field names match Drupal fields
+- Check GraphQL query field names match Drupal fields (may not match DCloud field IDs)
 - Verify content was created and published
 - Check query variables and pagination
+- For HTML content showing raw tags, use `dangerouslySetInnerHTML={{ __html: field.processed }}`
 
 ### Debug Commands
 
@@ -531,6 +544,8 @@ curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
 6. **Use semantic HTML** for accessibility
 7. **Include proper TypeScript types** for all data structures
 8. **Test the full user journey** from listing to detail pages
+9. **Use `dangerouslySetInnerHTML`** for processed HTML content from Drupal to avoid raw tag display
+10. **Verify GraphQL field names** match actual schema, not DCloud field IDs
 
 ## Success Criteria
 
@@ -543,5 +558,73 @@ A successful end-to-end implementation should:
 - [ ] Follow the established design patterns
 - [ ] Include proper metadata and SEO elements
 - [ ] Work with the existing authentication and routing system
+
+## Key Learnings and Common Mistakes
+
+Based on successful product catalog implementation, here are critical learnings to avoid common pitfalls:
+
+### DCloud Import Format Issues
+
+**Problem**: Field values incorrectly formatted with "field_" prefix
+```json
+// WRONG - This causes import failures
+"values": {
+  "field_price": "$299.99",
+  "field_in_stock": true
+}
+
+// CORRECT - Use field ID directly
+"values": {
+  "price": "$299.99", 
+  "in_stock": true
+}
+```
+
+**Solution**: Always use the field `id` value directly in content values, never add "field_" prefix.
+
+### GraphQL Field Name Mapping
+
+**Problem**: Assuming GraphQL field names match DCloud field IDs
+```typescript
+// WRONG - Field names may be transformed
+price: string           // DCloud field ID
+fieldPrice: string      // What you might expect in GraphQL
+
+// CORRECT - Check actual schema
+price: string          // Actual GraphQL field name (can match DCloud ID)
+inStock: boolean       // camelCase transformation
+productImages: object  // snake_case to camelCase
+```
+
+**Solution**: Always verify GraphQL field names by checking the actual schema or API response before writing queries.
+
+### HTML Content Rendering
+
+**Problem**: Drupal processed HTML showing as raw tags in frontend
+```jsx
+// WRONG - Shows: "Key Features <p>Fast Wireless Charging</p> <p>Qi-Compatible</p>"
+<span>{feature.processed}</span>
+
+// CORRECT - Renders HTML properly
+<span dangerouslySetInnerHTML={{ __html: feature.processed }} />
+```
+
+**Better Solution**: Use `string[]` instead of `text[]` for simple lists to avoid HTML altogether:
+```jsx
+// BEST - Clean, simple, no HTML rendering needed
+<span>{feature}</span>  // Just plain text: "Fast Wireless Charging"
+```
+
+**Solution**: Use `dangerouslySetInnerHTML` only when necessary for rich `text[]` fields. Prefer `string[]` for simple bullet lists.
+
+### Field Type Selection
+
+**Best Practice**: Choose field types based on content structure:
+- `string[]` for bullet points, features, specifications, tags, categories (clean plain text, no HTML rendering issues)
+- `text[]` only when you need rich formatting within each item (rare - avoid unless necessary)
+- `text` for rich content descriptions that need HTML formatting
+- `string` for simple values like price, SKU, names (plain text, max 255 chars)
+
+**Recommendation**: For repeated items like product features, use `string[]` instead of `text[]` to avoid HTML rendering complexity and security concerns.
 
 This comprehensive guide enables "one-shot" prompts like "create a product catalog" to result in complete, working implementations from backend to frontend.
