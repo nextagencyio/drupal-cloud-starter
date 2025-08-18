@@ -52,7 +52,7 @@ When asked to create a new content type (e.g., "create a product page"), follow 
 
 ### 2. DCloud Import JSON Creation
 
-**Use this format based on `sample.json`:**
+**Use this format based on `schema/sample.json`:**
 
 ```json
 {
@@ -219,11 +219,11 @@ export default function [ContentType]Card({ [contentType] }: [ContentType]CardPr
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
           {[contentType].title}
         </h3>
-        
+
         {/* Add field displays */}
         {/* For text[] fields with HTML content, use dangerouslySetInnerHTML */}
         {/* Example: <span dangerouslySetInnerHTML={{ __html: field.processed }} /> */}
-        
+
         <Link
           href={[contentType].path || `/[content-type]/${[contentType].id}`}
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
@@ -261,9 +261,9 @@ export default function [ContentType]Renderer({ [contentType] }: [ContentType]Re
             {/* Example: <span dangerouslySetInnerHTML={{ __html: field.processed }} /> */}
 
             {[contentType].body?.processed && (
-              <div 
-                className="prose prose-lg max-w-none mt-8" 
-                dangerouslySetInnerHTML={{ __html: [contentType].body.processed }} 
+              <div
+                className="prose prose-lg max-w-none mt-8"
+                dangerouslySetInnerHTML={{ __html: [contentType].body.processed }}
               />
             )}
           </div>
@@ -290,12 +290,12 @@ export default async function [ContentType]sPage() {
   const apollo = getServerApolloClient(await headers())
 
   try {
-    const { data } = await apollo.query<[ContentType]Data>({ 
-      query: GET_CONTENT_TYPES, 
+    const { data } = await apollo.query<[ContentType]Data>({
+      query: GET_CONTENT_TYPES,
       variables: { first: 20 },
-      fetchPolicy: 'no-cache' 
+      fetchPolicy: 'no-cache'
     })
-    
+
     const [contentType]s = data?.node[ContentType]s?.nodes || []
 
     return (
@@ -354,8 +354,8 @@ if (node.__typename === 'Node[ContentType]') {
 **Add to `app/components/Header.tsx`:**
 ```typescript
 // Add navigation link
-<Link 
-  href="/[content-type]" 
+<Link
+  href="/[content-type]"
   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
     pathname === '/[content-type]' ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:text-blue-600'
   }`}
@@ -408,7 +408,7 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
 ```json
 {
   "id": "price",
-  "label": "Price", 
+  "label": "Price",
   "type": "string"
 },
 {
@@ -437,7 +437,7 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
 },
 {
   "id": "location",
-  "label": "Location", 
+  "label": "Location",
   "type": "string"
 },
 {
@@ -480,7 +480,7 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
 },
 {
   "id": "project_images",
-  "label": "Project Images", 
+  "label": "Project Images",
   "type": "image[]"
 }
 ```
@@ -491,7 +491,7 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
 
 **1. DCloud Import Fails**
 - Check OAuth token expiration
-- Verify JSON structure matches `sample.json` format
+- Verify JSON structure matches `schema/sample.json` format
 - Ensure field IDs don't start with `field_`
 - **Critical**: In content values, use field ID without "field_" prefix (e.g., `"price": "$299.99"` not `"field_price": "$299.99"`)
 
@@ -575,7 +575,7 @@ Based on successful product catalog implementation, here are critical learnings 
 
 // CORRECT - Use field ID directly
 "values": {
-  "price": "$299.99", 
+  "price": "$299.99",
   "in_stock": true
 }
 ```
