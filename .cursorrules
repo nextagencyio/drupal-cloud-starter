@@ -92,11 +92,12 @@ lib/
   queries.ts (update)
   types.ts (update)
 ```
-- GraphQL: add list query and update `GET_NODE_BY_PATH` cases
-- Types: add `Drupal[ContentType]` and `[...]Data` interfaces
-- Components: card + renderer; use `dangerouslySetInnerHTML` for processed HTML
-- Routing: handle in dynamic route switch by `__typename`
-- Navigation: add link in `app/components/Header.tsx`
+ - GraphQL: add list query and update `GET_NODE_BY_PATH` cases
+ - Types: add `Drupal[ContentType]` and `[...]Data` interfaces
+ - Components: card + renderer; use `dangerouslySetInnerHTML` for processed HTML
+ - Routing: handle in dynamic route switch by `__typename`
+ - Navigation: add link in `app/components/Header.tsx`; update `navigationItems` and active detection with `pathname.startsWith('/route/')`
+ - DCloud GraphQL fields return simple types (`string`, `string[]`, `bool`, etc.), not `{ processed }` objects — probe schema with a quick query before typing components
 
 5) Build and test
 - `npm run build` → fix TypeScript/build errors
@@ -110,6 +111,11 @@ Checklist:
 - [ ] Build passes
 - [ ] Listing and detail pages render
 - [ ] Navigation works, responsive design verified
+
+# Component Architecture
+- Per type, create `[ContentType]Card.tsx` (listing) and `[ContentType]Renderer.tsx` (detail)
+- Cards: preview data + CTA; Renderers: full display, responsive layout
+- Place components in `app/components/`; listing in `app/[content-type]/page.tsx`; update `app/[...slug]/page.tsx` to route by `__typename`
 
 # Field Types Reference
 - `text` – Rich HTML field
@@ -142,6 +148,11 @@ curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer [TOKEN]" \
   -d '{"query":"{ __schema { types { name } } }"}'
+# Quick field structure probe (example)
+curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{"query":"{ nodeProducts(first:1){ nodes { id title price inStock features } } }"}'
 ```
 
 # Best Practices
@@ -154,4 +165,3 @@ curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
 
 # Success Criteria
 - Builds without errors; routes render correctly; navigation works; responsive; proper fallbacks; follows design patterns; integrates with existing auth and routing.
-

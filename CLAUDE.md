@@ -598,6 +598,35 @@ productImages: object  // snake_case to camelCase
 
 **Solution**: Always verify GraphQL field names by checking the actual schema or API response before writing queries.
 
+### GraphQL Field Value Structure Discovery
+
+**Critical Learning**: GraphQL field values from DCloud imports return as simple types, not objects:
+
+```typescript
+// WRONG - Assuming field values are objects with .processed
+fieldPrice?: {
+  processed: string
+}
+fieldFeatures?: Array<{
+  processed: string
+}>
+
+// CORRECT - DCloud imports create simple value fields
+price?: string
+features?: string[]
+```
+
+**Discovery Process**: Test GraphQL queries directly to understand actual schema:
+```bash
+# Test simple query to check field structure
+curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{"query":"{ nodeProducts(first: 1) { nodes { id title price sku inStock features } } }"}'
+```
+
+**Solution**: Always test a simple GraphQL query first to understand the actual field structure before writing TypeScript types and components.
+
 ### HTML Content Rendering
 
 **Problem**: Drupal processed HTML showing as raw tags in frontend
@@ -626,5 +655,70 @@ productImages: object  // snake_case to camelCase
 - `string` for simple values like price, SKU, names (plain text, max 255 chars)
 
 **Recommendation**: For repeated items like product features, use `string[]` instead of `text[]` to avoid HTML rendering complexity and security concerns.
+
+### Navigation Menu Integration Pattern
+
+**Essential Step**: Always update the main navigation when creating new content types:
+
+```typescript
+// Update navigationItems array in app/components/Header.tsx
+const navigationItems = [
+  { name: 'Home', href: '/' },
+  { name: 'Products', href: '/products' },  // Add new content type
+  { name: 'Articles', href: '/articles' },
+  { name: 'About', href: '/about' }
+]
+
+// Update active tab detection to include content type routes
+const getActiveTab = () => {
+  if (pathname === '/') return 'Home'
+  if (pathname === '/products' || pathname.startsWith('/products/')) return 'Products'
+  if (pathname === '/articles' || pathname.startsWith('/articles/')) return 'Articles'
+  if (pathname === '/about') return 'About'
+  return null
+}
+```
+
+**Pattern**: Use `.startsWith()` for active state detection to highlight navigation for both listing and detail pages.
+
+### Component Architecture Best Practices
+
+**Proven Pattern**: Create two components per content type:
+1. **`[ContentType]Card.tsx`** - For listing views with preview information
+2. **`[ContentType]Renderer.tsx`** - For detail pages with complete information
+
+**Component Features**:
+- **Cards**: Preview data, stock/status indicators, truncated feature lists, call-to-action links
+- **Renderers**: Full data display, sticky sidebars, responsive grids, structured information hierarchy
+
+**File Organization**:
+```
+app/
+├── components/
+│   ├── ProductCard.tsx      # Reusable card for listings
+│   ├── ProductRenderer.tsx  # Full page renderer for details
+│   └── Header.tsx          # Updated with new navigation
+├── products/
+│   └── page.tsx            # Listing page using ProductCard
+└── [...slug]/
+    └── page.tsx            # Updated to handle new content type routing
+```
+
+### Build Process Validation
+
+**Critical**: Always run build process after major changes to catch TypeScript and import errors:
+
+```bash
+npm run build  # Must complete without errors
+npm run dev    # Test in development mode
+```
+
+**Testing Checklist**: 
+- [ ] Build completes successfully
+- [ ] Listing page loads and displays content
+- [ ] Detail pages render via dynamic routing
+- [ ] Navigation highlights correctly
+- [ ] Mobile responsive design works
+- [ ] Error states display appropriately
 
 This comprehensive guide enables "one-shot" prompts like "create a product catalog" to result in complete, working implementations from backend to frontend.
