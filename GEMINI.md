@@ -43,11 +43,12 @@ When asked to create a new content type (e.g., "create a product page"), follow 
 ```markdown
 1. Create DCloud Import JSON for [content_type]
 2. Import content type and sample content via API
-3. Create TypeScript types and GraphQL queries
-4. Build frontend components ([ContentCard], [ContentRenderer])
-5. Create listing and detail pages
-6. Test build process and fix errors
-7. Validate end-to-end functionality
+3. **CRITICAL**: Run schema generation (`npm run generate-schema`) to update GraphQL schema
+4. Create TypeScript types and GraphQL queries
+5. Build frontend components ([ContentCard], [ContentRenderer])
+6. Create listing and detail pages
+7. Test build process and fix errors
+8. Validate end-to-end functionality
 ```
 
 ### 2. DCloud Import JSON Creation
@@ -130,6 +131,32 @@ curl -k -X POST "${DRUPAL_BASE_URL}/api/dcloud-import" \
 - Node IDs created
 - GraphQL schema updates
 - **Important**: GraphQL field names may differ from DCloud field IDs (check actual schema)
+
+**CRITICAL: Immediately Update GraphQL Schema After Import:**
+```bash
+# Generate updated GraphQL schema to include new content type
+npm run generate-schema
+```
+
+**Verify the schema includes your content type:**
+```bash
+# Check that your content type appears in the generated schema
+grep -i [your_content_type] schema/schema.graphql
+
+# Example for products:
+grep -i product schema/schema.graphql
+```
+
+**Test the GraphQL query works:**
+```bash
+# Get fresh token and test query
+DRUPAL_BASE_URL=$(grep NEXT_PUBLIC_DRUPAL_BASE_URL .env.local | cut -d '=' -f2)
+# ... (get token as shown above)
+curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [ACCESS_TOKEN]" \
+  -d '{"query":"{ node[ContentType]s(first: 2) { nodes { id title } } }"}'
+```
 
 ### 4. Frontend Implementation
 
@@ -511,6 +538,39 @@ curl -s "http://localhost:3001/[content-type]" | grep -o "<title>[^<]*" | head -
 - Check query variables and pagination
 - For HTML content showing raw tags, use `dangerouslySetInnerHTML={{ __html: field.processed }}`
 
+**5. GraphQL Schema Not Updated After DCloud Import**
+- **Critical Issue**: DCloud imports create content types successfully but GraphQL schema may not update immediately
+- Content exists in Drupal but `nodeProducts` query returns "field not found" errors
+- This is the most common issue with DCloud imports
+
+**Solution Process**:
+1. Clear Drupal caches (if you have admin access)
+2. **Always run schema generation script**: `npm run generate-schema`
+3. This regenerates the GraphQL schema files and validates the schema is updated
+4. Test queries again after schema regeneration
+
+### Essential Schema Generation Workflow
+
+**CRITICAL**: Always run schema generation after DCloud imports to ensure GraphQL integration works properly.
+
+```bash
+# Generate updated GraphQL schema after content type imports
+npm run generate-schema
+```
+
+This command:
+- Authenticates with Drupal using OAuth
+- Performs GraphQL introspection to get the current schema
+- Generates updated schema files in `/schema/` directory
+- Validates that new content types are available in GraphQL
+
+**Add this to your workflow**:
+1. Import content type via DCloud API
+2. **Immediately run**: `npm run generate-schema`
+3. Check generated schema includes your new content type
+4. Test GraphQL queries
+5. Proceed with frontend implementation
+
 ### Debug Commands
 
 ```bash
@@ -527,11 +587,26 @@ curl -k -X POST "${DRUPAL_BASE_URL}/oauth/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}"
 
-# Test GraphQL query
+# Test GraphQL query and check available types
 curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer [TOKEN]" \
-  -d '{"query":"{ __schema { types { name } } }"}'
+  -d '{"query":"{ __schema { types { name } } }"}' | grep -i product
+
+# Check available query fields (look for nodeProducts)
+curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{"query":"{ __schema { queryType { fields { name } } } }"}' | grep -i node
+
+# Generate fresh schema (most important)
+npm run generate-schema
+
+# Test actual content type query
+curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{"query":"{ nodeProducts(first: 2) { nodes { id title } } }"}'
 ```
 
 ## Best Practices
@@ -720,5 +795,40 @@ npm run dev    # Test in development mode
 - [ ] Navigation highlights correctly
 - [ ] Mobile responsive design works
 - [ ] Error states display appropriately
+
+### GraphQL Schema Generation Workflow (CRITICAL LEARNING)
+
+The most important learning from the product catalog implementation is the **mandatory schema generation step**:
+
+**Problem**: DCloud imports successfully create content types and content, but GraphQL schema doesn't update automatically.
+**Symptoms**: 
+- `nodeProducts` query returns "field not found" errors
+- Content exists in Drupal but not accessible via GraphQL
+- Route queries work but content type queries fail
+
+**Solution**: **ALWAYS run schema generation immediately after DCloud imports**:
+
+```bash
+# After any DCloud import, immediately run:
+npm run generate-schema
+
+# This step is MANDATORY for GraphQL integration to work
+```
+
+**Why this is critical**:
+- DCloud API creates Drupal content types but doesn't trigger GraphQL schema rebuilds
+- The `generate-schema` script performs fresh introspection and updates local schema files
+- Without this step, frontend development will fail with "type not found" errors
+- This step bridges the gap between Drupal content type creation and Next.js GraphQL integration
+
+**Workflow Integration**:
+1. Import via DCloud API ✅
+2. **Run `npm run generate-schema`** ✅ ← CRITICAL STEP
+3. Verify schema includes new content type ✅
+4. Proceed with frontend development ✅
+
+This learning transforms the development workflow from "sometimes works" to "reliably works every time."
+
+## Summary
 
 This comprehensive guide enables "one-shot" prompts like "create a product catalog" to result in complete, working implementations from backend to frontend.

@@ -76,6 +76,10 @@ curl -k -X POST "${DRUPAL_BASE_URL}/api/dcloud-import" \
   -H "Authorization: Bearer [ACCESS_TOKEN]" \
   -d @content-type-import.json
 ```
+- **CRITICAL**: Immediately run schema generation:
+```bash
+npm run generate-schema
+```
 - Verify: machine names, created nodes, and GraphQL schema updates
 
 4) Implement frontend
@@ -106,6 +110,7 @@ lib/
 
 Checklist:
 - [ ] DCloud import succeeds
+- [ ] **Schema generation runs (`npm run generate-schema`)**
 - [ ] GraphQL schema exposes fields
 - [ ] Types compile
 - [ ] Build passes
@@ -134,7 +139,8 @@ Checklist:
 
 # Troubleshooting
 - DCloud import fails: check OAuth, JSON structure, no `field_` in values
-- GraphQL errors: confirm content type exists, clear GraphQL cache
+- **Schema not updated**: ALWAYS run `npm run generate-schema` after DCloud imports
+- GraphQL errors: confirm content type exists, clear GraphQL cache, regenerate schema
 - Build errors: verify types, imports, query syntax
 - Content not showing: confirm field names match GraphQL schema; for HTML use `dangerouslySetInnerHTML={{ __html: field.processed }}`
 
@@ -144,11 +150,11 @@ curl -k "${DRUPAL_BASE_URL}/api/dcloud-import/status"
 curl -k -X POST "${DRUPAL_BASE_URL}/oauth/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}"
-curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer [TOKEN]" \
-  -d '{"query":"{ __schema { types { name } } }"}'
-# Quick field structure probe (example)
+# MOST IMPORTANT: Generate fresh schema
+npm run generate-schema
+# Check schema includes your content type
+grep -i [content_type] schema/schema.graphql
+# Test GraphQL query
 curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer [TOKEN]" \
@@ -156,12 +162,13 @@ curl -k -X POST "${DRUPAL_BASE_URL}/graphql" \
 ```
 
 # Best Practices
-1. Create sample content for immediate testing
-2. Prefer `string[]` for simple lists; use `text[]` only when necessary
-3. Verify GraphQL field names against the actual schema
-4. Handle empty/missing data gracefully
-5. Keep TypeScript types accurate and complete
-6. Use semantic HTML and ensure responsive design
+1. **ALWAYS run `npm run generate-schema` immediately after DCloud imports**
+2. Create sample content for immediate testing
+3. Prefer `string[]` for simple lists; use `text[]` only when necessary
+4. Verify GraphQL field names against the actual schema
+5. Handle empty/missing data gracefully
+6. Keep TypeScript types accurate and complete
+7. Use semantic HTML and ensure responsive design
 
 # Success Criteria
 - Builds without errors; routes render correctly; navigation works; responsive; proper fallbacks; follows design patterns; integrates with existing auth and routing.
