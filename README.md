@@ -44,6 +44,16 @@ Copy the example environment file and configure your variables:
 cp .env.example .env.local
 ```
 
+# DrupalCloud CLI (dcloud)
+
+A command-line interface for managing DrupalCloud spaces, monitoring usage, and interacting with the DrupalCloud API using personal access tokens.
+
+## Installation
+
+```bash
+npm install -g dcloud-cli
+```
+
 ## Requirements
 
 - Node.js 14.0.0 or later
