@@ -22,7 +22,7 @@ async function getAccessToken(): Promise<string | null> {
 
   try {
     const tokenUrl = `${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/oauth/token`
-    
+
     const response = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
@@ -44,17 +44,17 @@ async function getAccessToken(): Promise<string | null> {
     }
 
     const data = await response.json()
-    
+
     if (!data.access_token) {
       return null
     }
-    
+
     const token = `${data.token_type || 'Bearer'} ${data.access_token}`
-    
+
     // Cache the token
     tokenCache.token = token
     tokenCache.expiresAt = Date.now() + (parseInt(data.expires_in || '3600') * 1000)
-    
+
     return token
   } catch (error) {
     console.error('Auth error:', error)
@@ -64,9 +64,9 @@ async function getAccessToken(): Promise<string | null> {
 
 export async function POST(request: NextRequest) {
   // Check if required environment variables are configured
-  if (!process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 
-      !process.env.DRUPAL_CLIENT_ID || 
-      !process.env.DRUPAL_CLIENT_SECRET) {
+  if (!process.env.NEXT_PUBLIC_DRUPAL_BASE_URL ||
+    !process.env.DRUPAL_CLIENT_ID ||
+    !process.env.DRUPAL_CLIENT_SECRET) {
     return NextResponse.json({
       errors: [{
         message: 'Drupal Cloud is not configured yet. Please set up your environment variables.',
@@ -84,10 +84,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.text()
-    
+
     // Get access token for authentication
     const accessToken = await getAccessToken()
-    
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -100,23 +100,24 @@ export async function POST(request: NextRequest) {
     } else {
       console.log('No access token available for GraphQL request')
     }
-    
+
     const graphqlUrl = `${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/graphql`
-    
+    console.log('Attempting GraphQL request to:', graphqlUrl)
+
     const response = await fetch(graphqlUrl, {
       method: 'POST',
       headers,
       body,
     })
 
+    // Read the response body once and cache it.
+    const data = await response.text()
+
     if (!response.ok) {
       console.error('GraphQL request failed:', response.status, response.statusText)
-      const errorText = await response.text()
-      console.error('GraphQL error response:', errorText)
+      console.error('GraphQL error response:', data)
     }
 
-    const data = await response.text()
-    
     const corsHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
