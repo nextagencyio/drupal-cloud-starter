@@ -34,7 +34,7 @@ export default function SetupGuide({ missingVars }: SetupGuideProps) {
             Welcome to Drupal Cloud!
           </h1>
           <p className="text-gray-600">
-            Let's connect your app to your Drupal backend to get started.
+            Let&#39;s connect your app to your Drupal backend to get started.
           </p>
         </div>
 
@@ -86,7 +86,7 @@ export default function SetupGuide({ missingVars }: SetupGuideProps) {
               📋 Get Your Values from Drupal Cloud
             </h3>
             <p className="text-amber-800 text-sm">
-              Visit your <strong>Drupal Cloud homepage</strong> to find the exact environment variable values you need to copy and paste. They'll be ready for you there!
+              Visit your <strong>Drupal Cloud homepage</strong> to find the exact environment variable values you need to copy and paste. They&#39;ll be ready for you there!
             </p>
           </div>
 

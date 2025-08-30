@@ -27,7 +27,7 @@ function PageNotFound({ path }: { path: string }) {
     <div className="text-center py-16">
       <div className="bg-white rounded-lg shadow-sm p-12">
         <h1 className="text-2xl font-semibold text-gray-900 mb-4">Page Not Found</h1>
-        <p className="text-gray-600 mb-2">We couldn't find any content at this path.</p>
+        <p className="text-gray-600 mb-2">We couldn&#39;t find any content at this path.</p>
         <p className="text-sm text-gray-500">Path: {path}</p>
       </div>
     </div>

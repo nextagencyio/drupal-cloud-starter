@@ -17,7 +17,7 @@ export default function Contact() {
           <div className="text-center mb-12">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Contact Us</h1>
             <p className="text-lg text-gray-600">
-              Have questions about Drupal Cloud? We'd love to hear from you.
+              Have questions about Drupal Cloud? We&#39;d love to hear from you.
             </p>
           </div>
 
@@ -25,7 +25,7 @@ export default function Contact() {
             {/* Contact Information */}
             <div className="bg-white rounded-lg shadow-sm p-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">Get in Touch</h2>
-              
+
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
@@ -82,7 +82,7 @@ export default function Contact() {
             {/* Contact Form */}
             <div className="bg-white rounded-lg shadow-sm p-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">Send us a Message</h2>
-              
+
               <form className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
