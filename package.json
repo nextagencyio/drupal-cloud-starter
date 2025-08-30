@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "npx dcloud-cli health check && echo '✅ CLI health check passed'",
+    "test:cli": "npx dcloud-cli download claude --help && npx dcloud-cli content import --example > /tmp/example.json && echo '✅ CLI tests passed'",
     "generate-schema": "tsx scripts/generate-schema.ts"
   },
   "dependencies": {
@@ -25,7 +27,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "autoprefixer": "^10.4.20",
-    "dcloud-cli": "^1.1.2",
+    "dcloud-cli": "^1.1.3",
     "eslint": "^9",
     "eslint-config-next": "^15.0.0",
     "postcss": "^8.4.47",
