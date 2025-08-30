@@ -1,9 +1,6 @@
 import './globals.css'
-import { Inter } from 'next/font/google'
 import ApolloProvider from './components/providers/ApolloProvider'
 import { Viewport, type Metadata } from 'next'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -71,7 +68,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans">
         <ApolloProvider>
           {children}
         </ApolloProvider>

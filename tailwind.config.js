@@ -22,7 +22,11 @@ module.exports = {
     'text-indigo-600',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Inter'],
+      },
+    },
   },
   plugins: [
     require('@tailwindcss/typography'),
